@@ -31,17 +31,7 @@ class Cron(ExtensionBase):
 
     @cached_property
     def meltano_project_dir(self) -> Path:
-        root = Path("/")
-        path = Path.cwd()
-        for _ in range(
-            1024
-        ):  # Safety measure in case this recursion somehow goes infinite
-            if ".meltano" in os.listdir(path) and (path / ".meltano").is_dir():
-                return path
-            if path == root:
-                break
-            path = path.parent
-        raise Exception("Unable to find the Meltano project directory.")
+        return Path(os.environ["MELTANO_PROJECT_ROOT"]).resolve()
 
     @cached_property
     def cron_ext_dir(self) -> Path:
