@@ -5,6 +5,7 @@ import os
 import re
 import stat
 import subprocess
+import sys
 from contextlib import suppress
 from hashlib import sha256
 from pathlib import Path
@@ -15,7 +16,32 @@ from cached_property import cached_property
 from meltano.edk import models
 from meltano.edk.extension import ExtensionBase
 
-log = structlog.get_logger()
+from cron_ext import APP_NAME
+
+log = structlog.get_logger(APP_NAME)
+
+
+def run_subprocess(
+    args: tuple[str],
+    error_message: str,
+    exit_on_nonzero_returncode: bool = True,
+) -> subprocess.CompletedProcess:
+    try:
+        proc = subprocess.run(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except Exception:
+        log.exception(error_message)
+        sys.exit(1)
+    if proc.returncode:
+        if exit_on_nonzero_returncode:
+            log.critical(error_message)
+            sys.exit(proc.returncode)
+        log.error(error_message)
+    return proc
 
 
 class Cron(ExtensionBase):
@@ -38,12 +64,10 @@ class Cron(ExtensionBase):
 
     @cached_property
     def meltano_schedule(self) -> dict[str, str]:
-        # FIXME: handle non-zero exit code
         return json.loads(
-            subprocess.run(
+            run_subprocess(
                 ("meltano", "schedule", "list", "--format=json"),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                "Unable to list Meltano schedules.",
             ).stdout
         )["schedules"]
 
@@ -56,12 +80,9 @@ class Cron(ExtensionBase):
 
     @property
     def crontab(self) -> str:
-        # FIXME: handle non-zero exit code
-        return subprocess.run(
+        return run_subprocess(
             ("crontab", "-l"),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
+            "Unable to list crontab entries.",
         ).stdout
 
     @crontab.setter

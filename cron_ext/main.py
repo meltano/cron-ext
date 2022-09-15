@@ -10,9 +10,8 @@ import typer
 from meltano.edk.extension import DescribeFormat
 from meltano.edk.logging import default_logging_config, parse_log_level
 
+from cron_ext import APP_NAME
 from cron_ext.extension import Cron
-
-APP_NAME = "cron-ext"
 
 log = structlog.get_logger(APP_NAME)
 
