@@ -59,7 +59,7 @@ class Cron(ExtensionBase):
 
     @cached_property
     def cron_ext_dir(self) -> Path:
-        path = self.meltano_project_dir / ".meltano" / "cron-ext"
+        path = self.meltano_project_dir / ".meltano" /  "run" / "cron-ext"
         path.mkdir(parents=True, exist_ok=True)
         return path
 
