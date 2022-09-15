@@ -92,10 +92,10 @@ class Cron(ExtensionBase):
     def crontab(self, content: str) -> None:
         if not content.endswith("\n"):
             content += "\n"
-        subprocess.run(
+        run_subprocess(
             ("crontab", "-"),
+            "Unable to install new crontab."
             input=content,
-            text=True,
         )
 
     @staticmethod
