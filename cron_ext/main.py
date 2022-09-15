@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sys
 from typing import List, Optional, Tuple, Union
-from uuid import UUID
 
 import structlog
 import typer
@@ -50,7 +49,7 @@ def list_command() -> None:
 @app.command()
 def install(
     ctx: typer.Context,
-    schedule_ids: Optional[List[UUID]] = typer.Argument(None),
+    schedule_ids: Optional[List[str]] = typer.Argument(None),
 ) -> None:
     """Install a crontab for the Meltano project."""
     ext.install(schedule_ids or ())
@@ -59,7 +58,7 @@ def install(
 @app.command()
 def uninstall(
     ctx: typer.Context,
-    schedule_ids: Optional[List[UUID]] = typer.Argument(None),
+    schedule_ids: Optional[List[str]] = typer.Argument(None),
     uninstall_all: bool = typer.Option(
         False,
         "--all",
