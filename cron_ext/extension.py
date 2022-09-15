@@ -24,8 +24,9 @@ log = structlog.get_logger(APP_NAME)
 def run_subprocess(
     args: tuple[str],
     error_message: str,
-    *,
+    *args,
     exit_on_nonzero_returncode: bool = True,
+    **kwargs,
 ) -> subprocess.CompletedProcess:
     try:
         proc = subprocess.run(
@@ -33,6 +34,8 @@ def run_subprocess(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            *args,
+            **kwargs,
         )
     except Exception:
         log.exception(error_message)
@@ -59,7 +62,7 @@ class Cron(ExtensionBase):
 
     @cached_property
     def cron_ext_dir(self) -> Path:
-        path = self.meltano_project_dir / ".meltano" /  "run" / "cron-ext"
+        path = self.meltano_project_dir / ".meltano" / "run" / "cron-ext"
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -94,7 +97,7 @@ class Cron(ExtensionBase):
             content += "\n"
         run_subprocess(
             ("crontab", "-"),
-            "Unable to install new crontab."
+            "Unable to install new crontab.",
             input=content,
         )
 
