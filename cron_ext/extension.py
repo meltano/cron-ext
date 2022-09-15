@@ -24,6 +24,7 @@ log = structlog.get_logger(APP_NAME)
 def run_subprocess(
     args: tuple[str],
     error_message: str,
+    *,
     exit_on_nonzero_returncode: bool = True,
 ) -> subprocess.CompletedProcess:
     try:
@@ -80,10 +81,12 @@ class Cron(ExtensionBase):
 
     @property
     def crontab(self) -> str:
-        return run_subprocess(
+        proc = run_subprocess(
             ("crontab", "-l"),
             "Unable to list crontab entries.",
-        ).stdout
+            exit_on_nonzero_returncode=False,
+        )
+        return "" if proc.returncode else proc.stdout
 
     @crontab.setter
     def crontab(self, content: str) -> None:
