@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional
 
 import structlog
 import typer
@@ -19,7 +19,7 @@ ext = Cron()
 
 typer.core.rich = None  # remove to enable stylized help output when `rich` is installed
 app = typer.Typer(
-    name=APP_NAME,
+    name='cron',
     pretty_exceptions_enable=False,
 )
 
@@ -29,7 +29,7 @@ def initialize(
     ctx: typer.Context,
     force: bool = typer.Option(False, help="Force initialization (if supported)"),
 ) -> None:
-    """Initialize the Cron plugin (no-op)."""
+    """Initialize the cron extension (no-op)."""
     try:
         ext.initialize(force)
     except Exception:
@@ -41,8 +41,10 @@ def initialize(
 
 @app.command(name="list")
 def list_command() -> None:
-    """(Default command)"""
-    typer.echo("\n".join(ext.entries))
+    """List installed cron entries for the Meltano project."""
+    entries = ext.entries
+    if entries:
+        typer.echo("\n".join(entries))
 
 
 @app.command()
@@ -51,7 +53,7 @@ def install(
     schedule_ids: Optional[List[str]] = typer.Argument(None),
 ) -> None:
     """Install a crontab for the Meltano project."""
-    ext.install(schedule_ids or ())
+    ext.install(set(schedule_ids or ()))
 
 
 @app.command()
@@ -69,7 +71,7 @@ def uninstall(
     ),
 ) -> None:
     """Uninstall a crontab for the Meltano project."""
-    ext.uninstall(schedule_ids or (), uninstall_all)
+    ext.uninstall(set(schedule_ids or ()), uninstall_all)
 
 
 @app.command()
@@ -78,7 +80,7 @@ def describe(
         DescribeFormat.text, "--format", help="Output format"
     )
 ) -> None:
-    """Describe the available commands of this extension."""
+    """Describe the available commands for the cron extension."""
     try:
         typer.echo(ext.describe_formatted(output_format))
     except Exception:
@@ -113,4 +115,4 @@ def main(
         json_format=meltano_log_json,
     )
     if ctx.invoked_subcommand is None:
-        list_command()  # Run the `list` command by default
+        typer.echo(ctx.get_help())
