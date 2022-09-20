@@ -1,0 +1,11 @@
+version: '3.0'
+services:
+  pytest:
+    build:
+      context: ..
+      dockerfile: tests/Dockerfile
+    volumes:
+        - ../:/cron-ext
+    environment:
+      CONTAINERIZED: 'True'
+      PYTHONDONTWRITEBYTECODE: '1'
