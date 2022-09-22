@@ -19,7 +19,7 @@ ext = Cron()
 
 typer.core.rich = None  # remove to enable stylized help output when `rich` is installed
 app = typer.Typer(
-    name='cron',
+    name="cron",
     pretty_exceptions_enable=False,
 )
 
