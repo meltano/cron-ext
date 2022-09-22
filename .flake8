@@ -1,0 +1,16 @@
+[flake8]
+max-line-length = 88
+max-complexity = 10
+docstring-convention = google
+allow-star-arg-any = true
+ignore =
+    ANN101  # Missing type annotation for self in method
+    ANN102  # Missing type annotation for cls in classmethod
+    E731    # do not assign a lambda expression, use a def
+    W503    # Line break occurred before a binary operator
+per-file-ignores =
+    # Don't require docstrings or type annotations in tests
+    tests/*:ANN,D,DAR
+    # `cron_ext/main.py` defines the CLI, in which docstrings are used for help
+    # text rather than documentation of the functions.
+    cron_ext/main.py:DAR101

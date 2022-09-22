@@ -29,10 +29,12 @@ project_name = "cron_test_project"
 def meltano_project(tmp_path_factory: pytest.TempPathFactory) -> None:
     with pytest.MonkeyPatch.context() as monkeypatch:
         monkeypatch.chdir(tmp_path_factory.mktemp(f"cron-ext-projects-{os.getpid()}"))
-        subprocess.run(('meltano', 'init', '--no_usage_stats', project_name), check=True)
+        subprocess.run(
+            ("meltano", "init", "--no_usage_stats", project_name), check=True
+        )
         monkeypatch.chdir(project_name)
         shutil.copy(test_dir / "meltano.yml", "meltano.yml")
-        subprocess.run(('meltano', 'install', 'utility', 'cron'), check=True)
+        subprocess.run(("meltano", "install", "utility", "cron"), check=True)
         yield
 
 
@@ -78,8 +80,7 @@ def cron_entries(entries: Sequence[str], append: bool = False) -> None:
                 (*prev_content.splitlines(), *entries) if append else entries
             )
             + "\n",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
         )
         assert not proc.returncode
@@ -315,7 +316,8 @@ class TestInstallCommand:
         assert caplog.record_tuples[0][0] == "cron-ext"
         assert caplog.record_tuples[0][1] == logging.ERROR
         match = re.fullmatch(
-            "Failed to install all specified schedules: schedules with IDs (.*) were not found",
+            "Failed to install all specified schedules: schedules with IDs "
+            "(.*) were not found",
             caplog.record_tuples[0][2],
         )
         assert ast.literal_eval(match[1]) == {"not-real"}
@@ -382,7 +384,7 @@ class TestUninstallCommand:
     def test_uninstall_selective(self, invoke: Invoker, schedule_ids: set[str]):
         assert not invoke("install").output
         check_installed({"a-to-b", "e-to-f", "c-to-d"})
-        assert not invoke('uninstall', *schedule_ids).output
+        assert not invoke("uninstall", *schedule_ids).output
         check_installed({"a-to-b", "e-to-f", "c-to-d"} - schedule_ids)
 
     @pytest.mark.parametrize("uninstall_args", ((), ("--all",), ("a-to-b", "e-to-f")))
