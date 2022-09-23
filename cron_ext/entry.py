@@ -3,4 +3,4 @@
 import re
 
 comment_pattern = re.compile(r"^\s*#.*$")
-entry_pattern = re.compile(r"(?i)^.+?'(?P<path>(?:/.*)*/(?P<name>.*)\.sh)'.*$")
+entry_pattern = re.compile(r"(?i)^.+?'(?P<path>/?(?:.*/)(?P<name>.*)\.sh)'.*$")
