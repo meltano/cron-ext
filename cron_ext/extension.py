@@ -70,7 +70,7 @@ class Cron(ExtensionBase):
     """Meltano extension class for cron-ext."""
 
     comment_pattern = re.compile(r"^\s*#.*$")
-    entry_pattern = re.compile(r"(?i)^.+?'(?P<path>(?:/.*)*/(?P<name>.*)\.sh)'.*$")
+    entry_pattern = re.compile(r"(?i)^.+?'(?P<path>/?(?:.*/)(?P<name>.*)\.sh)'.*$")
 
     def invoke(self, *args: Any, **kwargs: Any) -> None:
         """Invoke the underlying CLI that is being wrapped by this extension.
