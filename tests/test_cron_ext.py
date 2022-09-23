@@ -17,7 +17,8 @@ import pytest
 import yaml
 from typer.testing import CliRunner, Result
 
-from cron_ext import main
+from cron_ext import Target, main
+from cron_ext.entry import entry_pattern
 from cron_ext.extension import Cron
 
 test_dir = Path(__file__).parent
@@ -71,12 +72,6 @@ def invoke() -> Invoker:
         return result
 
     return invoker
-
-
-@pytest.fixture(scope="function", autouse=True)
-def reset_ext() -> None:
-    # Required to reset the data cached by the extension between each test
-    main.ext = Cron()
 
 
 class CrontabContextManager(Protocol):
@@ -240,6 +235,23 @@ class TestListCommand:
         ):
             assert invoke("list").output.splitlines() == non_comment_entries
 
+    def test_stdout_list_empty(self, invoke: Invoker):
+        with cron_entries(
+            (
+                "2 4 6 8 0 true",
+                "0 8 6 4 2 false",
+            )
+        ):
+            with meltano_cron_entries(
+                (
+                    "0 2 4 6 0 /some/path/.meltano/run/cron-ext/script_a.sh",
+                    "9 7 5 3 1 /some/path/.meltano/run/cron-ext/script_b.sh",
+                ),
+                append=True,
+            ):
+                assert invoke("list").output
+                assert not invoke("list", "--target=stdout").output
+
 
 @contextmanager
 def meltano_yml(content: str) -> None:
@@ -283,7 +295,7 @@ def check_installed(schedule_ids: Iterable[str]):
     cwd = Path.cwd().resolve()
     seen = set()
     for entry in entry_set:
-        match = Cron.entry_pattern.fullmatch(entry)
+        match = entry_pattern.fullmatch(entry)
         seen.add(match.group("name"))
         path = Path(match.group("path"))
         assert path.exists()
@@ -365,6 +377,15 @@ class TestInstallCommand:
                 assert not invoke("install").output
                 assert not invoke("list").output
 
+    def test_install_to_stdout(self, invoke: Invoker):
+        meltano_entries = (
+            "0 2 4 6 0 /some/path/.meltano/run/cron-ext/script_c.sh",
+            "9 7 5 3 1 /some/path/.meltano/run/cron-ext/script_d.sh",
+        )
+        with cron_entries(("1 2 3 4 5 true", "5 4 3 2 1 false")):
+            with meltano_cron_entries(meltano_entries):
+                invoke("install").output == "\n".join(meltano_entries)
+
 
 class TestUninstallCommand:
     @pytest.mark.parametrize("crontab_section", (cron_entries, meltano_cron_entries))
@@ -427,3 +448,18 @@ class TestUninstallCommand:
                 ).stdout.splitlines()[:2]
                 == non_meltano_entries
             )
+
+    def test_uninstall_from_stdout_errors(
+        self,
+        invoke: Invoker,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        error_message = "Cannot uninstall from an unmanaged cron entry store"
+
+        with pytest.raises(ValueError, match=error_message):
+            Cron(store=Target.stdout).uninstall(set(), False)
+
+        with caplog.at_level(logging.ERROR):
+            invoke("uninstall", "--target=stdout", expected_exit_code=1)
+
+        assert caplog.record_tuples == [("cron-ext", logging.ERROR, error_message)]
