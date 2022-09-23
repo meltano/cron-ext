@@ -39,15 +39,14 @@ def run_subprocess(
             args,
             capture_output=True,
             text=True,
-            check=True,
             **kwargs,
         )
-    except subprocess.CalledProcessError:
+    except Exception:
+        log.exception(error_message)
+        sys.exit(1)
+    if proc.returncode:
         if exit_on_nonzero_returncode:
             log.critical(error_message)
             sys.exit(proc.returncode)
         log.error(error_message)
-    except Exception:
-        log.exception(error_message)
-        sys.exit(1)
     return proc
