@@ -35,6 +35,26 @@ def meltano_project(tmp_path_factory: pytest.TempPathFactory) -> None:
         monkeypatch.chdir(project_name)
         shutil.copy(test_dir / "meltano.yml", "meltano.yml")
         subprocess.run(("meltano", "install", "utility", "cron"), check=True)
+
+        MELTANO_PROJECT_ROOT, MELTANO_PROJECT_ID = (
+            "".join(x.split("=")[1:])
+            for x in subprocess.run(
+                (
+                    "meltano",
+                    "invoke",
+                    "--print-var",
+                    "MELTANO_PROJECT_ROOT",
+                    "--print-var",
+                    "MELTANO_PROJECT_ID",
+                    "cron",
+                ),
+                stdout=subprocess.PIPE,
+                text=True,
+            ).stdout.split("\n")[:2]
+        )
+        monkeypatch.setenv("MELTANO_PROJECT_ROOT", MELTANO_PROJECT_ROOT)
+        monkeypatch.setenv("MELTANO_PROJECT_ID", MELTANO_PROJECT_ID)
+
         yield
 
 
@@ -91,11 +111,12 @@ def cron_entries(entries: Sequence[str], append: bool = False) -> None:
 
 @contextmanager
 def meltano_cron_entries(entries: Sequence[str], append: bool = False) -> None:
+    section_template = "# --- {} MELTANO CRONTAB SECTION ({}) ---"
     with cron_entries(
         (
-            "# --- BEGIN MELTANO CRONTAB SECTION ---",
+            section_template.format("BEGIN", os.environ["MELTANO_PROJECT_ID"]),
             *entries,
-            "# --- END MELTANO CRONTAB SECTION ---",
+            section_template.format("END", os.environ["MELTANO_PROJECT_ID"]),
         ),
         append=append,
     ):
@@ -181,6 +202,7 @@ class TestListCommand:
         entries in a crontab, and that the identification of the section header and
         footer is sufficiently flexible.
         """
+        project_id = os.environ["MELTANO_PROJECT_ID"]
         dashes = ["-" * x for x in random.choices(range(1, max_repeats + 1), k=4)]
         spaces = [" " * x for x in random.choices(range(max_repeats), k=10)]
         non_comment_entries = [
@@ -191,12 +213,14 @@ class TestListCommand:
             "5 5 5 5 5 true",
         ]
         begin_section_line = (
-            "{0}#{1}{5}{2}BEGIN MELTANO CRONTAB SECTION{3}{6}{4}".format(
-                *spaces[::2], *dashes[::2]
+            "{0}#{1}{5}{2}BEGIN MELTANO CRONTAB SECTION ({7}){3}{6}{4}".format(
+                *spaces[::2], *dashes[::2], project_id
             )
         )
-        end_section_line = "{0}#{1}{5}{2}END MELTANO CRONTAB SECTION{3}{6}{4}".format(
-            *spaces[1::2], *dashes[1::2]
+        end_section_line = (
+            "{0}#{1}{5}{2}END MELTANO CRONTAB SECTION ({7}){3}{6}{4}".format(
+                *spaces[1::2], *dashes[1::2], project_id
+            )
         )
         with cron_entries(
             (
@@ -208,7 +232,7 @@ class TestListCommand:
                 non_comment_entries[2],
                 "# Another comment",
                 non_comment_entries[3],
-                "# --- END MELTANO CRONTAB SECTION --- ",
+                f"# --- END MELTANO CRONTAB SECTION {project_id} --- ",
                 end_section_line,
                 non_comment_entries[4],
                 end_section_line,

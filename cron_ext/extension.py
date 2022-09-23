@@ -85,15 +85,16 @@ class Cron(ExtensionBase):
         raise NotImplementedError
 
     @cached_property
+    def meltano_project_id(self) -> str:
+        """Meltano project ID."""
+        # noqa: DAR201
+        return os.environ["MELTANO_PROJECT_ID"]
+
+    @cached_property
     def meltano_project_dir(self) -> Path:
         """Path to the Meltano project directory."""
         # noqa: DAR201
-        try:
-            return Path(os.environ["MELTANO_PROJECT_ROOT"]).resolve()
-        except KeyError:
-            # In rare cases `$MELTANO_PROJECT_ROOT` may not be set, so we try
-            # using the current working directory.
-            return (Path.cwd() / "meltano.yml").resolve(strict=True).parent
+        return Path(os.environ["MELTANO_PROJECT_ROOT"]).resolve()
 
     @cached_property
     def cron_ext_dir(self) -> Path:
@@ -149,16 +150,16 @@ class Cron(ExtensionBase):
         )
         self._crontab = content
 
-    @staticmethod
-    def _index_of_match(pattern: str, lines: Iterable[str]) -> int:
+    def _index_of_match(self, pattern: str, lines: Iterable[str]) -> int:
         compiled_pattern = re.compile(pattern)
         for i, line in enumerate(lines):
-            if compiled_pattern.fullmatch(line):
+            match = compiled_pattern.fullmatch(line)
+            if match and match["id"] == self.meltano_project_id:
                 return i
         raise ValueError(f"Pattern {pattern!r} does not match any line.")
 
     def _find_meltano_section_indices(self, lines: Iterable[str]) -> tuple[int, int]:
-        template = r"^\s*#\s*-+\s*{} MELTANO CRONTAB SECTION\s*-+\s*$"
+        template = r"^\s*#\s*-+\s*{} MELTANO CRONTAB SECTION \((?P<id>.*?)\)\s*-+\s*$"
         lines = tuple(lines)
         return (
             self._index_of_match(template.format("BEGIN"), lines) + 1,
@@ -202,12 +203,16 @@ class Cron(ExtensionBase):
             a, b = self._find_meltano_section_indices(lines)
         except ValueError:
             # create new Meltano section at the bottom of the crontab
+            section_template = (
+                "# ----- {} MELTANO CRONTAB SECTION "
+                f"({self.meltano_project_id}) -----"
+            )
             new_lines = (
                 *lines,
                 "",
-                "# ----- BEGIN MELTANO CRONTAB SECTION -----",
+                section_template.format("BEGIN"),
                 *new_entries,
-                "# ------ END MELTANO CRONTAB SECTION ------",
+                section_template.format("END"),
                 "",
             )
         else:
