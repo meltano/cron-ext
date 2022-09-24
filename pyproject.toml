@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "cron-ext"
 version = "0.0.1"
-description = "`cron-ext` is a Meltano utility extension that provides basic job scheduling via CRON."
+description = "`cron-ext` is a Meltano utility extension that provides basic job scheduling via cron."
 authors = ["Meltano <hello@meltano.com>"]
 license = "MIT"
 
