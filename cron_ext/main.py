@@ -10,12 +10,10 @@ import typer
 from meltano.edk.extension import DescribeFormat
 from meltano.edk.logging import default_logging_config, parse_log_level
 
-from cron_ext import APP_NAME
+from cron_ext import APP_NAME, Target
 from cron_ext.extension import Cron
 
 log = structlog.get_logger(APP_NAME)
-
-ext = Cron()
 
 typer.core.rich = None  # remove to enable stylized help output when `rich` is installed
 app = typer.Typer(
@@ -31,7 +29,7 @@ def initialize(
 ) -> None:
     """Initialize the cron extension (no-op)."""
     try:
-        ext.initialize(force)
+        Cron().initialize(force)
     except Exception:
         log.exception(
             "initialize failed with uncaught exception, please report to maintainer"
@@ -40,25 +38,26 @@ def initialize(
 
 
 @app.command(name="list")
-def list_command() -> None:
+def list_command(
+    target: Target = Target.crontab,
+) -> None:
     """List installed cron entries for the Meltano project."""
-    entries = ext.entries
+    entries = Cron(store=target).store.entries
     if entries:
         typer.echo("\n".join(entries))
 
 
 @app.command()
 def install(
-    ctx: typer.Context,
     schedule_ids: Optional[List[str]] = typer.Argument(None),
+    target: Target = Target.crontab,
 ) -> None:
     """Install a crontab for the Meltano project."""
-    ext.install(set(schedule_ids or ()))
+    Cron(store=target).install(set(schedule_ids or ()))
 
 
 @app.command()
 def uninstall(
-    ctx: typer.Context,
     schedule_ids: Optional[List[str]] = typer.Argument(None),
     uninstall_all: bool = typer.Option(
         False,
@@ -69,9 +68,14 @@ def uninstall(
             "active Meltano environment"
         ),
     ),
+    target: Target = Target.crontab,
 ) -> None:
     """Uninstall a crontab for the Meltano project."""
-    ext.uninstall(set(schedule_ids or ()), uninstall_all)
+    try:
+        Cron(store=target).uninstall(set(schedule_ids or ()), uninstall_all)
+    except ValueError as ex:
+        log.error(str(ex))
+        sys.exit(1)
 
 
 @app.command()
@@ -82,7 +86,7 @@ def describe(
 ) -> None:
     """Describe the available commands for the cron extension."""
     try:
-        typer.echo(ext.describe_formatted(output_format))
+        typer.echo(Cron().describe_formatted(output_format))
     except Exception:
         log.exception(
             "describe failed with uncaught exception, please report to maintainer"

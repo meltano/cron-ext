@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import stat
-import subprocess
 import sys
 from contextlib import suppress
 from pathlib import Path
@@ -21,55 +19,36 @@ import structlog
 from meltano.edk import models
 from meltano.edk.extension import ExtensionBase
 
-from cron_ext import APP_NAME
+import cron_ext.stores as stores
+from cron_ext import APP_NAME, Target
+from cron_ext.entry import entry_pattern
+from cron_ext.subprocess import run_subprocess
 
 log = structlog.get_logger(APP_NAME)
-
-
-def run_subprocess(
-    args: tuple[str, ...],
-    error_message: str,
-    *,
-    exit_on_nonzero_returncode: bool = True,
-    **kwargs: Any,
-) -> subprocess.CompletedProcess[str]:
-    """Helper function to run a subprocess.
-
-    Args:
-        args: Args for the subprocess to run.
-        error_message: The error message to log if the process has a non-zero
-            return code, or if an exception is raised (e.g. because the
-            command was not found).
-        kwargs: Keyword arguments for `subprocess.run`.
-        exit_on_nonzero_returncode: Whether the calling process should exit if
-            the subprocess has a non-zero return code.
-
-    Returns:
-        The completed process.
-    """
-    try:
-        proc = subprocess.run(
-            args,
-            capture_output=True,
-            text=True,
-            **kwargs,
-        )
-    except Exception:
-        log.exception(error_message)
-        sys.exit(1)
-    if proc.returncode:
-        if exit_on_nonzero_returncode:
-            log.critical(error_message)
-            sys.exit(proc.returncode)
-        log.error(error_message)
-    return proc
 
 
 class Cron(ExtensionBase):
     """Meltano extension class for cron-ext."""
 
-    comment_pattern = re.compile(r"^\s*#.*$")
-    entry_pattern = re.compile(r"(?i)^.+?'(?P<path>/?(?:.*/)(?P<name>.*)\.sh)'.*$")
+    def __init__(
+        self,
+        *args: Any,
+        store: Target = Target.crontab,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the cron extension.
+
+        Args:
+            args: Positional arguments passed to the parent class.
+            store: The store which should be used for reading/writing cron entries.
+            kwargs: Keyword arguments passed to the parent class.
+        """
+        super().__init__(*args, **kwargs)
+        self.store: stores.EntryStore = {
+            Target.crontab: stores.CrontabEntryStore,
+            Target.stdout: stores.StdoutEntryStore,
+        }[store]()
+        self.meltano_project_dir = Path(os.environ["MELTANO_PROJECT_ROOT"]).resolve()
 
     def invoke(self, *args: Any, **kwargs: Any) -> None:
         """Invoke the underlying CLI that is being wrapped by this extension.
@@ -82,18 +61,6 @@ class Cron(ExtensionBase):
             NotImplementedError: There is no underlying CLI for this extension.
         """
         raise NotImplementedError
-
-    @cached_property
-    def meltano_project_id(self) -> str:
-        """Meltano project ID."""
-        # noqa: DAR201
-        return os.environ["MELTANO_PROJECT_ID"]
-
-    @cached_property
-    def meltano_project_dir(self) -> Path:
-        """Path to the Meltano project directory."""
-        # noqa: DAR201
-        return Path(os.environ["MELTANO_PROJECT_ROOT"]).resolve()
 
     @cached_property
     def cron_ext_dir(self) -> Path:
@@ -122,106 +89,6 @@ class Cron(ExtensionBase):
             schedule["name"]
             for schedule in self.meltano_schedule["elt"] + self.meltano_schedule["job"]
         }
-
-    @cached_property
-    def _crontab(self) -> str:
-        proc = run_subprocess(
-            ("crontab", "-l"),
-            "Unable to list crontab entries.",
-            exit_on_nonzero_returncode=False,
-        )
-        return "" if proc.returncode else proc.stdout
-
-    @property
-    def crontab(self) -> str:
-        """Content from the installed crontab."""
-        # noqa: DAR201
-        return self._crontab
-
-    @crontab.setter
-    def crontab(self, content: str) -> None:
-        if not content.endswith("\n"):
-            content += "\n"
-        run_subprocess(
-            ("crontab", "-"),
-            "Unable to install new crontab.",
-            input=content,
-        )
-        self._crontab = content
-
-    def _index_of_match(self, pattern: str, lines: Iterable[str]) -> int:
-        compiled_pattern = re.compile(pattern)
-        for i, line in enumerate(lines):
-            match = compiled_pattern.fullmatch(line)
-            if match and match["id"] == self.meltano_project_id:
-                return i
-        raise ValueError(f"Pattern {pattern!r} does not match any line.")
-
-    def _find_meltano_section_indices(self, lines: Iterable[str]) -> tuple[int, int]:
-        template = r"^\s*#\s*-+\s*{} MELTANO CRONTAB SECTION \((?P<id>.*?)\)\s*-+\s*$"
-        lines = tuple(lines)
-        return (
-            self._index_of_match(template.format("BEGIN"), lines) + 1,
-            -self._index_of_match(template.format("END"), reversed(lines)) - 1,
-        )
-
-    @classmethod
-    def _ignore_entry(cls, entry: str) -> bool:
-        # Preserve/skip full-line comments and blank lines
-        return bool(cls.comment_pattern.fullmatch(entry)) or not entry.strip()
-
-    @classmethod
-    def _unique_entries(cls, *entries: str) -> Iterable[str]:
-        seen = set()
-        for entry in entries:
-            if cls._ignore_entry(entry):
-                yield entry
-            else:
-                match = cls.entry_pattern.fullmatch(entry)
-                if not match:
-                    continue
-                elif match["name"] not in seen:
-                    seen.add(match["name"])
-                    yield entry
-
-    @property
-    def entries(self) -> tuple[str, ...]:
-        """Entries from the installed crontab found within the Meltano section."""
-        # noqa: DAR201
-        lines = self.crontab.splitlines()
-        try:
-            a, b = self._find_meltano_section_indices(lines)
-        except ValueError:
-            return ()
-        return tuple(line for line in lines[a:b] if not self._ignore_entry(line))
-
-    @entries.setter
-    def entries(self, new_entries: Iterable[str]) -> None:
-        lines = self.crontab.splitlines()
-        try:
-            a, b = self._find_meltano_section_indices(lines)
-        except ValueError:
-            # create new Meltano section at the bottom of the crontab
-            section_template = (
-                "# ----- {} MELTANO CRONTAB SECTION "
-                f"({self.meltano_project_id}) -----"
-            )
-            new_lines = (
-                *lines,
-                "",
-                section_template.format("BEGIN"),
-                *new_entries,
-                section_template.format("END"),
-                "",
-            )
-        else:
-            # update the existing Meltano section
-            new_lines = (
-                *lines[:a],
-                *new_entries,
-                *lines[b:],
-            )
-        self.crontab = "\n".join(new_lines)
 
     def _new_entries(self, predicate: Callable[[str], bool]) -> Iterable[str]:
         base_env = {"PATH": f'{os.environ["PATH"]}:$PATH'}
@@ -263,11 +130,9 @@ class Cron(ExtensionBase):
             predicate = lambda x: x in schedule_ids
         else:
             predicate = lambda _: True
-        self.entries = tuple(
-            self._unique_entries(
-                *self._new_entries(predicate),
-                *self.entries,
-            )
+        self.store.entries = (  # type: ignore
+            *self._new_entries(predicate),
+            *self.store.entries,
         )
         if schedule_ids:
             unavailable_schedule_ids = schedule_ids - self.meltano_schedule_ids
@@ -287,8 +152,14 @@ class Cron(ExtensionBase):
                 uninstalled.
             uninstall_all: Whether all installed Meltano schedules should be
                 uninstalled, including those currently unknown to Meltano.
+
+        Raises:
+            ValueError: The store is inappropriate for uninstallation.
         """
-        prev_entries = self.entries
+        if not self.store.is_managed:
+            raise ValueError("Cannot uninstall from an unmanaged cron entry store")
+
+        prev_entries = self.store.entries
 
         # Get the predicate rule for what should be removed
         if uninstall_all:
@@ -303,14 +174,14 @@ class Cron(ExtensionBase):
 
         # Update the installed entries and scripts using the chosen rule
         entries = []
-        for entry in self.entries:
-            match = self.entry_pattern.fullmatch(entry)
+        for entry in self.store.entries:
+            match = entry_pattern.fullmatch(entry)
             if match and not predicate(match.group("name")):
                 entries.append(entry)
-        self.entries = tuple(entries)
+        self.store.entries = tuple(entries)  # type: ignore
 
         for entry in prev_entries:
-            match = self.entry_pattern.fullmatch(entry)
+            match = entry_pattern.fullmatch(entry)
             if match and predicate(match["name"]):
                 with suppress(FileNotFoundError):
                     Path(match["path"]).unlink()

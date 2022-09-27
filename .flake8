@@ -9,6 +9,8 @@ ignore =
     E731    # do not assign a lambda expression, use a def
     W503    # Line break occurred before a binary operator
 per-file-ignores =
+    # Allow __init__ files to collect & expose attributes within their modules
+    */__init__.py: F401
     # Don't require docstrings or type annotations in tests
     tests/*:ANN,D,DAR
     # `cron_ext/main.py` defines the CLI, in which docstrings are used for help
