@@ -1,4 +1,6 @@
-"""A Meltano utility extension that provides basic job scheduling via CRON."""
+"""A Meltano utility extension that provides basic job scheduling via cron."""
+
+from enum import Enum
 
 from enum import Enum
 

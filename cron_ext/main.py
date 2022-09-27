@@ -1,4 +1,4 @@
-"""Meltano CRON utility extension CLI entrypoint."""
+"""Meltano cron utility extension CLI entrypoint."""
 
 from __future__ import annotations
 
@@ -111,7 +111,7 @@ def main(
         help="Log in the meltano JSON log format",
     ),
 ) -> None:
-    """Meltano utility extension that provides basic job scheduling via CRON."""
+    """Meltano utility extension that provides basic job scheduling via cron."""
     default_logging_config(
         level=parse_log_level(log_level),
         timestamps=log_timestamps,

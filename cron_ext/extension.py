@@ -1,4 +1,4 @@
-"""Meltano CRON utility extension."""
+"""Meltano cron utility extension."""
 
 from __future__ import annotations
 
