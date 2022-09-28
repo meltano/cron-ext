@@ -11,11 +11,12 @@ import subprocess
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generator, Iterable, Protocol, Sequence
+from typing import Any, Callable, Generator, Iterable, Sequence
 
 import pytest
 import yaml
 from typer.testing import CliRunner, Result
+from typing_extensions import Protocol
 
 from cron_ext import Target, main
 from cron_ext.entry import entry_pattern
