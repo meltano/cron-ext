@@ -2,8 +2,6 @@
 
 from enum import Enum
 
-from enum import Enum
-
 APP_NAME = "cron-ext"
 
 
