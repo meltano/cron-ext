@@ -253,6 +253,21 @@ class TestListCommand:
                 assert invoke("list").output
                 assert not invoke("list", "--target=stdout").output
 
+    def test_list_name_only(self, invoke: Invoker):
+        with cron_entries(
+            (
+                "1 4 6 8 0 true",
+                "1 8 6 4 2 false",
+            )
+        ):
+            with meltano_cron_entries(
+                (
+                    "1 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "1 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
+                ),
+                append=True,
+            ):
+                assert invoke("list", "--name-only").output == 'script_a\nscript_b\n'
 
 @contextmanager
 def meltano_yml(content: str) -> None:
