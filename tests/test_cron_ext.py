@@ -176,13 +176,13 @@ class TestListCommand:
 
     def test_list_only_lists_meltano_entries(self, invoke: Invoker):
         new_meltano_cron_entries = [
-            "1 1 1 1 1 echo 'double negative' | tac | tac",
-            "2 2 2 2 2 head -c 16 /dev/urandom > /dev/null",
+            "1 1 1 1 1 '/project/dir/.meltano/run/cron-ext/script_a.sh'",
+            "2 2 2 2 2 '/project/dir/.meltano/run/cron-ext/script_b.sh'",
         ]
         with cron_entries(
             (
-                "1 2 3 4 5 '/project/dir/.meltano/run/cron-ext/script_a.sh'",
-                "5 4 3 2 1 '/project/dir/.meltano/run/cron-ext/script_b.sh'",
+                "1 2 3 4 5 echo 'double negative' | tac | tac",
+                "5 4 3 2 1 head -c 16 /dev/urandom > /dev/null",
             )
         ):
             with meltano_cron_entries(
