@@ -25,8 +25,7 @@ typing-extensions = "^4.3"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^6.4"
-# Depend on meltano@main until the next release post 2.6.0 because of dependency conflicts
-meltano = {git = "https://github.com/meltano/meltano.git", rev = "main"}
+meltano = "^2.7"
 pytest = "^7.1"
 
 [tool.isort]
