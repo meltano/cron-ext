@@ -181,8 +181,8 @@ class TestListCommand:
         ]
         with cron_entries(
             (
-                "1 2 3 4 5 true",
-                "5 4 3 2 1 false",
+                "1 2 3 4 5 '/project/dir/.meltano/run/cron-ext/script_a.sh'",
+                "5 4 3 2 1 '/project/dir/.meltano/run/cron-ext/script_b.sh'",
             )
         ):
             with meltano_cron_entries(
@@ -202,11 +202,11 @@ class TestListCommand:
         dashes = ["-" * x for x in random.choices(range(1, max_repeats + 1), k=4)]
         spaces = [" " * x for x in random.choices(range(max_repeats), k=10)]
         non_comment_entries = [
-            "1 1 1 1 1 true",
-            "2 2 2 2 2 true",
-            "3 3 3 3 3 true",
-            "4 4 4 4 4 true",
-            "5 5 5 5 5 true",
+            "1 1 1 1 1 '/project/dir/.meltano/run/cron-ext/script_a.sh'",
+            "2 2 2 2 2 '/project/dir/.meltano/run/cron-ext/script_b.sh'",
+            "3 3 3 3 3 '/project/dir/.meltano/run/cron-ext/script_c.sh'",
+            "4 4 4 4 4 '/project/dir/.meltano/run/cron-ext/script_d.sh'",
+            "5 5 5 5 5 '/project/dir/.meltano/run/cron-ext/script_e.sh'",
         ]
         begin_section_line = (
             "{0}#{1}{5}{2}BEGIN MELTANO CRONTAB SECTION ({7}){3}{6}{4}".format(
@@ -245,8 +245,8 @@ class TestListCommand:
         ):
             with meltano_cron_entries(
                 (
-                    "0 2 4 6 0 /some/path/.meltano/run/cron-ext/script_a.sh",
-                    "9 7 5 3 1 /some/path/.meltano/run/cron-ext/script_b.sh",
+                    "0 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "9 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
                 ),
                 append=True,
             ):
