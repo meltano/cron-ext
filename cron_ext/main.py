@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 import structlog
 import typer
@@ -38,6 +38,13 @@ def initialize(
         sys.exit(1)
 
 
+def _extract_names(entries: Iterable[str]) -> Iterable[str]:
+    for entry in entries:
+        match = entry_pattern.fullmatch(entry)
+        if match:
+            yield match["name"]
+
+
 @app.command(name="list")
 def list_command(
     target: Target = Target.crontab,
@@ -47,10 +54,8 @@ def list_command(
 ) -> None:
     """List installed cron entries for the Meltano project."""
     entries = Cron(store=target).store.entries
-    if name_only:
-        entries = (entry_pattern.fullmatch(entry)["name"] for entry in entries)
     if entries:
-        typer.echo("\n".join(entries))
+        typer.echo("\n".join(_extract_names(entries) if name_only else entries))
 
 
 @app.command()
