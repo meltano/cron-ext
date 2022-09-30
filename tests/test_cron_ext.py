@@ -267,7 +267,8 @@ class TestListCommand:
                 ),
                 append=True,
             ):
-                assert invoke("list", "--name-only").output == 'script_a\nscript_b\n'
+                assert invoke("list", "--name-only").output == "script_a\nscript_b\n"
+
 
 @contextmanager
 def meltano_yml(content: str) -> None:

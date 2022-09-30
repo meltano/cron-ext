@@ -41,12 +41,14 @@ def initialize(
 @app.command(name="list")
 def list_command(
     target: Target = Target.crontab,
-    name_only: bool = typer.Option(False, help="Whether only the names of the installed schedules should be listed")
+    name_only: bool = typer.Option(
+        False, help="Whether only the names of the installed schedules should be listed"
+    ),
 ) -> None:
     """List installed cron entries for the Meltano project."""
     entries = Cron(store=target).store.entries
     if name_only:
-        entries = (entry_pattern.fullmatch(entry)['name'] for entry in entries)
+        entries = (entry_pattern.fullmatch(entry)["name"] for entry in entries)
     if entries:
         typer.echo("\n".join(entries))
 
