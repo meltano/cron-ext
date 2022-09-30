@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import List, Optional
+from typing import Iterable, List, Optional
 
 import structlog
 import typer
@@ -11,6 +11,7 @@ from meltano.edk.extension import DescribeFormat
 from meltano.edk.logging import default_logging_config, parse_log_level
 
 from cron_ext import APP_NAME, Target
+from cron_ext.entry import entry_pattern
 from cron_ext.extension import Cron
 
 log = structlog.get_logger(APP_NAME)
@@ -37,14 +38,24 @@ def initialize(
         sys.exit(1)
 
 
+def _extract_names(entries: Iterable[str]) -> Iterable[str]:
+    for entry in entries:
+        match = entry_pattern.fullmatch(entry)
+        if match:
+            yield match["name"]
+
+
 @app.command(name="list")
 def list_command(
     target: Target = Target.crontab,
+    name_only: bool = typer.Option(
+        False, help="Whether only the names of the installed schedules should be listed"
+    ),
 ) -> None:
     """List installed cron entries for the Meltano project."""
     entries = Cron(store=target).store.entries
     if entries:
-        typer.echo("\n".join(entries))
+        typer.echo("\n".join(_extract_names(entries) if name_only else entries))
 
 
 @app.command()
