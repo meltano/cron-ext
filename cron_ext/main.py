@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Iterable, List, Optional
+from typing import Callable, Iterable, List, Optional
 
 import structlog
 import typer
@@ -38,24 +38,57 @@ def initialize(
         sys.exit(1)
 
 
-def _extract_names(entries: Iterable[str]) -> Iterable[str]:
+def _get_name_entry_pairs(entries: Iterable[str]) -> Iterable[tuple[str, str]]:
     for entry in entries:
         match = entry_pattern.fullmatch(entry)
         if match:
-            yield match["name"]
+            yield (match["name"], entry)
+
+
+def _orphaned_filter_predicate(
+    ext: Cron,
+    orphaned: bool | None,
+) -> Callable[[str], bool]:
+    if orphaned:  # only list orphaned entries for this project
+        return lambda name: name not in ext.meltano_schedule_ids
+    elif orphaned is False:  # only list non-orphaned entries for this project
+        return lambda name: name in ext.meltano_schedule_ids
+    # list all entries for this project
+    return lambda _: True
 
 
 @app.command(name="list")
 def list_command(
     target: Target = Target.crontab,
     name_only: bool = typer.Option(
-        False, help="Whether only the names of the installed schedules should be listed"
+        False,
+        "--name-only/--not-name-only",
+        help="Whether only the names of the installed schedules should be listed",
+    ),
+    orphaned: Optional[bool] = typer.Option(
+        None,
+        "--orphaned/--not-orphaned",
+        help="Schedules which are installed but unknown to Meltano are orphaned. "
+        "By default all entries are listed. Use these flags to only get "
+        "orphaned/non-orphaned entries.",
     ),
 ) -> None:
     """List installed cron entries for the Meltano project."""
-    entries = Cron(store=target).store.entries
+    ext = Cron(store=target)
+
+    predicate = _orphaned_filter_predicate(ext, orphaned)
+    filtered_name_entry_pairs = tuple(
+        (name, entry)
+        for name, entry in _get_name_entry_pairs(ext.store.entries)
+        if predicate(name)
+    )
+
+    entries = tuple(
+        name_entry_pair[not name_only] for name_entry_pair in filtered_name_entry_pairs
+    )
+
     if entries:
-        typer.echo("\n".join(_extract_names(entries) if name_only else entries))
+        typer.echo("\n".join(entries))
 
 
 @app.command()

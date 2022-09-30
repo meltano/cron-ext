@@ -269,6 +269,56 @@ class TestListCommand:
             ):
                 assert invoke("list", "--name-only").output == "script_a\nscript_b\n"
 
+    def test_list_orphaned(self, invoke: Invoker):
+        with cron_entries(
+            (
+                "2 4 6 8 0 true",
+                "2 8 6 4 2 false",
+            )
+        ):
+            with meltano_cron_entries(
+                (
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
+                ),
+                append=True,
+            ):
+                assert (
+                    invoke("list", "--name-only").output
+                    == invoke("list", "--orphaned", "--name-only").output
+                    == "script_a\nscript_b\n"
+                )
+                assert invoke("list", "--orphaned").output
+                assert not invoke("list", "--not-orphaned").output
+            with meltano_cron_entries(
+                (
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/a-to-b.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/e-to-f.sh'",
+                ),
+                append=True,
+            ):
+                assert (
+                    invoke("list", "--name-only").output
+                    == invoke("list", "--not-orphaned", "--name-only").output
+                    == "a-to-b\ne-to-f\n"
+                )
+                assert not invoke("list", "--orphaned").output
+            with meltano_cron_entries(
+                (
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/a-to-b.sh'",
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/e-to-f.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
+                ),
+                append=True,
+            ):
+                for args, output in (
+                    ((), "a-to-b\nscript_a\ne-to-f\nscript_b\n"),
+                    (("--orphaned",), "script_a\nscript_b\n"),
+                    (("--not-orphaned",), "a-to-b\ne-to-f\n"),
+                ):
+                    assert invoke("list", "--name-only", *args).output == output
+
 
 @contextmanager
 def meltano_yml(content: str) -> None:
