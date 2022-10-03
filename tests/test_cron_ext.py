@@ -176,13 +176,13 @@ class TestListCommand:
 
     def test_list_only_lists_meltano_entries(self, invoke: Invoker):
         new_meltano_cron_entries = [
-            "1 1 1 1 1 echo 'double negative' | tac | tac",
-            "2 2 2 2 2 head -c 16 /dev/urandom > /dev/null",
+            "1 1 1 1 1 '/project/dir/.meltano/run/cron-ext/script_a.sh'",
+            "2 2 2 2 2 '/project/dir/.meltano/run/cron-ext/script_b.sh'",
         ]
         with cron_entries(
             (
-                "1 2 3 4 5 true",
-                "5 4 3 2 1 false",
+                "1 2 3 4 5 echo 'double negative' | tac | tac",
+                "5 4 3 2 1 head -c 16 /dev/urandom > /dev/null",
             )
         ):
             with meltano_cron_entries(
@@ -202,11 +202,11 @@ class TestListCommand:
         dashes = ["-" * x for x in random.choices(range(1, max_repeats + 1), k=4)]
         spaces = [" " * x for x in random.choices(range(max_repeats), k=10)]
         non_comment_entries = [
-            "1 1 1 1 1 true",
-            "2 2 2 2 2 true",
-            "3 3 3 3 3 true",
-            "4 4 4 4 4 true",
-            "5 5 5 5 5 true",
+            "1 1 1 1 1 '/project/dir/.meltano/run/cron-ext/script_a.sh'",
+            "2 2 2 2 2 '/project/dir/.meltano/run/cron-ext/script_b.sh'",
+            "3 3 3 3 3 '/project/dir/.meltano/run/cron-ext/script_c.sh'",
+            "4 4 4 4 4 '/project/dir/.meltano/run/cron-ext/script_d.sh'",
+            "5 5 5 5 5 '/project/dir/.meltano/run/cron-ext/script_e.sh'",
         ]
         begin_section_line = (
             "{0}#{1}{5}{2}BEGIN MELTANO CRONTAB SECTION ({7}){3}{6}{4}".format(
@@ -245,8 +245,8 @@ class TestListCommand:
         ):
             with meltano_cron_entries(
                 (
-                    "0 2 4 6 0 /some/path/.meltano/run/cron-ext/script_a.sh",
-                    "9 7 5 3 1 /some/path/.meltano/run/cron-ext/script_b.sh",
+                    "0 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "9 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
                 ),
                 append=True,
             ):
@@ -268,6 +268,56 @@ class TestListCommand:
                 append=True,
             ):
                 assert invoke("list", "--name-only").output == "script_a\nscript_b\n"
+
+    def test_list_orphaned(self, invoke: Invoker):
+        with cron_entries(
+            (
+                "2 4 6 8 0 true",
+                "2 8 6 4 2 false",
+            )
+        ):
+            with meltano_cron_entries(
+                (
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
+                ),
+                append=True,
+            ):
+                assert (
+                    invoke("list", "--name-only").output
+                    == invoke("list", "--orphaned", "--name-only").output
+                    == "script_a\nscript_b\n"
+                )
+                assert invoke("list", "--orphaned").output
+                assert not invoke("list", "--not-orphaned").output
+            with meltano_cron_entries(
+                (
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/a-to-b.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/e-to-f.sh'",
+                ),
+                append=True,
+            ):
+                assert (
+                    invoke("list", "--name-only").output
+                    == invoke("list", "--not-orphaned", "--name-only").output
+                    == "a-to-b\ne-to-f\n"
+                )
+                assert not invoke("list", "--orphaned").output
+            with meltano_cron_entries(
+                (
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/a-to-b.sh'",
+                    "2 2 4 6 0 '/some/path/.meltano/run/cron-ext/script_a.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/e-to-f.sh'",
+                    "2 7 5 3 1 '/some/path/.meltano/run/cron-ext/script_b.sh'",
+                ),
+                append=True,
+            ):
+                for args, output in (
+                    ((), "a-to-b\nscript_a\ne-to-f\nscript_b\n"),
+                    (("--orphaned",), "script_a\nscript_b\n"),
+                    (("--not-orphaned",), "a-to-b\ne-to-f\n"),
+                ):
+                    assert invoke("list", "--name-only", *args).output == output
 
 
 @contextmanager
