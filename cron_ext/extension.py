@@ -130,7 +130,7 @@ class Cron(ExtensionBase):
             predicate = lambda x: x in schedule_ids
         else:
             predicate = lambda _: True
-        self.store.entries = (  # type: ignore
+        self.store.entries = (
             *self._new_entries(predicate),
             *self.store.entries,
         )
@@ -178,7 +178,7 @@ class Cron(ExtensionBase):
             match = entry_pattern.fullmatch(entry)
             if match and not predicate(match.group("name")):
                 entries.append(entry)
-        self.store.entries = tuple(entries)  # type: ignore
+        self.store.entries = tuple(entries)
 
         for entry in prev_entries:
             match = entry_pattern.fullmatch(entry)
