@@ -4,10 +4,14 @@ max-complexity = 10
 docstring-convention = google
 allow-star-arg-any = true
 ignore =
-    ANN101  # Missing type annotation for self in method
-    ANN102  # Missing type annotation for cls in classmethod
-    E731    # do not assign a lambda expression, use a def
-    W503    # Line break occurred before a binary operator
+    # Missing type annotation for self in method
+    ANN101
+    # Missing type annotation for cls in classmethod
+    ANN102
+    # do not assign a lambda expression, use a def
+    E731
+    # Line break occurred before a binary operator
+    W503
 per-file-ignores =
     # Allow __init__ files to collect & expose attributes within their modules
     */__init__.py: F401
