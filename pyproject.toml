@@ -22,7 +22,7 @@ meltano-edk = {git = "https://github.com/meltano/edk.git", rev = "v0.1.0"}
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.1"
 meltano = "^2.17"
-pytest = "^7.2"
+pytest = "^7.4"
 
 [tool.isort]
 profile = "black"
