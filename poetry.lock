@@ -582,6 +582,28 @@ files = [
 ]
 
 [[package]]
+name = "check-jsonschema"
+version = "0.21.0"
+description = "A jsonschema CLI and pre-commit hook"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "check-jsonschema-0.21.0.tar.gz", hash = "sha256:691579e3c849af01e7a15e17c0ef39b85c68395a214dffa3bd92a8be99021744"},
+    {file = "check_jsonschema-0.21.0-py3-none-any.whl", hash = "sha256:f7b232ddfaced917dc75b932b8ed9e52ab603fd455c8af72e0cd04586f7b968a"},
+]
+
+[package.dependencies]
+click = ">=8,<9"
+importlib-resources = {version = ">=1.4.0", markers = "python_version < \"3.9\""}
+jsonschema = ">=4,<5.0"
+requests = "<3.0"
+"ruamel.yaml" = "0.17.21"
+
+[package.extras]
+dev = ["coverage (<8)", "pytest (<8)", "pytest-xdist (<4)", "responses (==0.22.0)"]
+docs = ["furo (==2022.12.07)", "sphinx (<7)", "sphinx-issues (<4)"]
+
+[[package]]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
@@ -1485,13 +1507,13 @@ files = [
 
 [[package]]
 name = "meltano"
-version = "2.15.3"
+version = "2.17.1"
 description = "Meltano is your CLI for ELT+: Open Source, Flexible, and Scalable. Move, transform, and test your data with confidence using a streamlined data engineering workflow you’ll love."
 optional = false
 python-versions = ">=3.7,<3.12"
 files = [
-    {file = "meltano-2.15.3-py3-none-any.whl", hash = "sha256:4fd65e95075f9f7a70a4967e06701738656a371faf6d4ac2d50aefc6eb3d6fc0"},
-    {file = "meltano-2.15.3.tar.gz", hash = "sha256:f55947b336bbb87d82a1a62757ee0d79b43745cc31dcae0179ef6ac4f7e7d173"},
+    {file = "meltano-2.17.1-py3-none-any.whl", hash = "sha256:be4ac63c50dea4db27db7d98f5387b6df5ff04c72bd533e1a5998d92de55db67"},
+    {file = "meltano-2.17.1.tar.gz", hash = "sha256:50b8e4f77134ca57fc4430266d85c7986180e4e78f3bcfb6dfcd6fcbf31ef9fb"},
 ]
 
 [package.dependencies]
@@ -1503,6 +1525,7 @@ authlib = ">=1.0.1,<2.0.0"
 backoff = ">=2.1.2,<3.0.0"
 bcrypt = ">=3.2.0,<4.0.0"
 cached-property = ">=1,<2"
+check-jsonschema = ">=0.21.0,<0.22.0"
 click = ">=8.1,<9.0"
 click-default-group = ">=1.2.1,<2.0.0"
 croniter = ">=1.3.5,<2.0.0"
@@ -1517,7 +1540,7 @@ flask-sqlalchemy = ">=2.4.4,<3.0.0"
 flatten-dict = ">=0,<1"
 gunicorn = ">=20.1.0,<21.0.0"
 importlib-resources = {version = ">=5.10.1,<6.0.0", markers = "python_version < \"3.9\""}
-jsonschema = ">=4.9,<5.0"
+jsonschema = ">=4.17,<5.0"
 meltano-flask-security = ">=0.1.0,<0.2.0"
 packaging = ">=21.3,<22.0"
 psutil = ">=5.6.3,<6.0.0"
@@ -2866,4 +2889,4 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7,<3.12"
-content-hash = "672fe9fb6569b2c4e8aa5d054386960d204906f8d40a0143a86741b8cf84ad8a"
+content-hash = "37b394c8cc170581611ec4db86f584e32ec102c91abfb812a838891bd6be16b5"
