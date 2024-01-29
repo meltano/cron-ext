@@ -24,5 +24,4 @@ class EntryStore(metaclass=ABCMeta):
 
     @entries.setter
     @abstractmethod
-    def entries(self, new_entries: Iterable[str]) -> None:
-        ...
+    def entries(self, new_entries: Iterable[str]) -> None: ...

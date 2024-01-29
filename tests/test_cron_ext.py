@@ -61,8 +61,7 @@ def meltano_project(tmp_path_factory: pytest.TempPathFactory) -> None:
 
 
 class Invoker(Protocol):
-    def __call__(self, *args: str, expected_exit_code: int = ...) -> Result:
-        ...
+    def __call__(self, *args: str, expected_exit_code: int = ...) -> Result: ...
 
 
 @pytest.fixture(scope="session")
@@ -78,8 +77,7 @@ def invoke() -> Invoker:
 class CrontabContextManager(Protocol):
     def __call__(
         self, entries: Sequence[str], append: bool = ...
-    ) -> Generator[None, None, None]:
-        ...
+    ) -> Generator[None, None, None]: ...
 
 
 @contextmanager
