@@ -12,6 +12,8 @@ ignore =
     E731
     # Line break occurred before a binary operator
     W503
+    # Multiple statements on one line (n.b. we let Black handle this)
+    E704
 per-file-ignores =
     # Allow __init__ files to collect & expose attributes within their modules
     */__init__.py: F401
