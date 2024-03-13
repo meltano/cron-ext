@@ -13,7 +13,7 @@ class EntryStore(metaclass=ABCMeta):
     @property
     @abstractmethod
     def is_managed(cls) -> bool:
-        """Whether the store manages its entries past inital assignment."""
+        """Whether the store manages its entries past initial assignment."""
         ...
 
     @property
