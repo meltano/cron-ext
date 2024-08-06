@@ -17,5 +17,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run Pytest
         run: |
-          docker-compose -f tests/compose.yml build --build-arg PYTHON_VERSION="${{ matrix.python-version }}"
-          docker-compose -f tests/compose.yml run pytest
+          docker compose -f tests/compose.yml build --build-arg PYTHON_VERSION="${{ matrix.python-version }}"
+          docker compose -f tests/compose.yml run pytest
