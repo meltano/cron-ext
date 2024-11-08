@@ -15,7 +15,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 cached-property = "^1" # Remove after Python 3.7 support is dropped
 python = ">=3.7,<3.12"
-typer = "^0.12.5"
+typer = "^0.13.0"
 typing-extensions = "^4.7"
 meltano-edk = {git = "https://github.com/meltano/edk.git", rev = "v0.1.0"}
 
