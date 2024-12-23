@@ -38,13 +38,13 @@ repos:
     - flake8-docstrings==1.6.0
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.13.0
+  rev: v1.14.0
   hooks:
   - id: mypy
     exclude: 'tests'
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.0
+  rev: v3.19.1
   hooks:
   - id: pyupgrade
     args: ['--py37-plus', '--keep-runtime-typing']
