@@ -4,13 +4,8 @@ from __future__ import annotations
 
 import os
 import re
-import sys
+from functools import cached_property
 from typing import Iterable
-
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from cached_property import cached_property
 
 from cron_ext.entry import comment_pattern, entry_pattern
 from cron_ext.stores.base import EntryStore

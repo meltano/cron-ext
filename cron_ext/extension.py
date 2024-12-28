@@ -7,13 +7,9 @@ import os
 import stat
 import sys
 from contextlib import suppress
+from functools import cached_property
 from pathlib import Path
 from typing import Any, Callable, Iterable
-
-if sys.version_info >= (3, 8):
-    from functools import cached_property
-else:
-    from cached_property import cached_property
 
 import structlog
 from meltano.edk import models
