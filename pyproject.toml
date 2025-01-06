@@ -13,15 +13,16 @@ license = "MIT"
 "Youtube" = "https://www.youtube.com/meltano"
 
 [tool.poetry.dependencies]
-cached-property = "^1" # Remove after Python 3.7 support is dropped
-python = ">=3.7,<3.12"
+python = ">=3.9"
 typer = "^0.15.1"
 typing-extensions = "^4.7"
-meltano-edk = {git = "https://github.com/meltano/edk.git", rev = "v0.1.0"}
+meltano-edk = { version = "~=0.4.4" }
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2"
-meltano = "^2.17"
+meltano = [
+    { version = ">=3.5", python = ">=3.9,<3.14" },
+]
 pytest = "^7.4"
 
 [tool.isort]
@@ -43,12 +44,8 @@ exclude = [
 addopts = "-ra -vvv"
 
 [build-system]
-requires = ["poetry-core==1.5.0"]
+requires = ["poetry-core==1.9.1"]
 build-backend = "poetry.core.masonry.api"
-
-packages = [
-    { include = "cron_ext" }
-]
 
 [tool.poetry.scripts]
 cron = 'cron_ext.main:app'

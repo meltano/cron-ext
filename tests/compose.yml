@@ -1,4 +1,3 @@
-version: '3.0'
 services:
   pytest:
     build:
@@ -8,4 +7,5 @@ services:
         - ../:/cron-ext
     environment:
       CONTAINERIZED: 'True'
+      FORCE_COLOR:
       PYTHONDONTWRITEBYTECODE: '1'
