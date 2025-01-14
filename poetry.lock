@@ -1058,13 +1058,13 @@ uv = ["uv (>=0.1.24,<0.6)"]
 
 [[package]]
 name = "meltano-edk"
-version = "0.4.4"
+version = "0.5.0"
 description = "A framework for building Meltano extensions"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "meltano_edk-0.4.4-py3-none-any.whl", hash = "sha256:ca0db2054ca6831ada0ba764445d3e776c29b2cc9c04489994b38399e1ac1de4"},
-    {file = "meltano_edk-0.4.4.tar.gz", hash = "sha256:ab6a50510bb616a8b90007f0af88f186aaae9ee48f79737cc54812da4b4836cc"},
+    {file = "meltano_edk-0.5.0-py3-none-any.whl", hash = "sha256:fbb45da002265e2bf584e2002af25f33a9744c1215ad417a744ff146d42e75a8"},
+    {file = "meltano_edk-0.5.0.tar.gz", hash = "sha256:daa76ffa094cc278044f660fb5eccb5a74960e83f0ba7fc94dc5f987b7db3dc9"},
 ]
 
 [package.dependencies]
@@ -2477,4 +2477,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9"
-content-hash = "109ac6e028fff05ad3cae36f521461c290e389966e92c580980d8b2b9059f5e9"
+content-hash = "8ad36a0a2b8dc03577f156d614565c60cf2b24dd26282d02ee77b76e0676d604"
