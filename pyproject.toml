@@ -23,7 +23,7 @@ coverage = "^7.8"
 meltano = [
     { version = ">=3.5", python = ">=3.9,<3.14" },
 ]
-pytest = "^8.3"
+pytest = "^8.4"
 
 [tool.isort]
 profile = "black"
