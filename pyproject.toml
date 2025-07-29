@@ -15,7 +15,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = ">=3.9"
 typer = "^0.15.3"
-typing-extensions = "^4.13"
+typing-extensions = "^4.14"
 meltano-edk = { version = "~=0.5.0" }
 
 [tool.poetry.group.dev.dependencies]
