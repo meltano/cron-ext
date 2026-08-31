@@ -5,7 +5,7 @@ ci:
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-json
   - id: check-toml
@@ -18,18 +18,18 @@ repos:
             .bumpversion.cfg
         )$
 
-- repo: https://github.com/psf/black
-  rev: 25.1.0
+- repo: https://github.com/psf/black-pre-commit-mirror
+  rev: 26.5.1
   hooks:
   - id: black
 
 - repo: https://github.com/pycqa/isort
-  rev: 6.0.1
+  rev: 9.0.1
   hooks:
   - id: isort
 
 - repo: https://github.com/pycqa/flake8
-  rev: 7.2.0
+  rev: 7.3.0
   hooks:
   - id: flake8
     additional_dependencies:
@@ -38,13 +38,13 @@ repos:
     - flake8-docstrings==1.6.0
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.15.0
+  rev: v2.3.1
   hooks:
   - id: mypy
     exclude: 'tests'
 
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.19.1
+  rev: v3.21.2
   hooks:
   - id: pyupgrade
     args: ['--py37-plus', '--keep-runtime-typing']
